@@ -18,10 +18,22 @@ tasks = {}
 class TranscriptionRequest(BaseModel):
     audio_file: str
 
+class TranscribeSegment(BaseModel):
+    id: int
+    seek: float
+    start: float
+    end: float
+    text: str
+    tokens: list[int]
+    temperature: float
+    avg_logprob: float
+    compression_ratio: float
+    no_speech_prob: float
+
 class TaskStatus(BaseModel):
     task_id: str
     status: str
-    result: str|None = None
+    result: list[TranscribeSegment]|None = None
 
 def check_cuda_warning():
     # Check if CUDA device is available
@@ -34,8 +46,8 @@ def check_cuda_warning():
 
 def transcribe_audio(task_id: str, audio_file: str, queue: multiprocessing.Queue):
     try:
-        result = tiny_whisper_model.transcribe(audio_file)
-        queue.put((task_id, "completed", result["text"]))
+        result = tiny_whisper_model.transcribe(audio_file, task="translate")
+        queue.put((task_id, "completed", result["segments"]))
     except Exception as e:
         queue.put((task_id, "failed", str(e)))
 
