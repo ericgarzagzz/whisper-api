@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile
 from pydantic import BaseModel
 import uuid
 from torch import multiprocessing
@@ -7,6 +7,8 @@ from torch.cuda import is_available
 import whisper
 import threading
 import logging
+import tempfile
+import shutil
 
 app = FastAPI()
 logger = logging.getLogger(__name__)
@@ -14,9 +16,6 @@ logger = logging.getLogger(__name__)
 tiny_whisper_model = whisper.load_model("tiny")
 
 tasks = {}
-
-class TranscriptionRequest(BaseModel):
-    audio_file: str
 
 class TranscribeSegment(BaseModel):
     id: int
@@ -33,7 +32,7 @@ class TranscribeSegment(BaseModel):
 class TaskStatus(BaseModel):
     task_id: str
     status: str
-    result: list[TranscribeSegment]|None = None
+    result: list[TranscribeSegment]|str|None = None
 
 def check_cuda_warning():
     # Check if CUDA device is available
@@ -63,12 +62,19 @@ def cancel_transcription(process: multiprocessing.Process):
         process.join()
 
 @app.post("/transcribe", response_model=TaskStatus)
-async def start_transcription(request: TranscriptionRequest):
+async def start_transcription(file: UploadFile):
     check_cuda_warning()
     task_id = str(uuid.uuid4())
     tasks[task_id] = { "status": "running", "result": None, "process": None }
 
-    process, queue = start_transcription_process(task_id, request.audio_file)
+    if file.filename is None:
+        return HTTPException(status_code=400, detail="The uploaded file has not been provided or is not a valid file")
+
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        shutil.copyfileobj(file.file, temp_file)
+        temp_file_path = temp_file.name
+
+    process, queue = start_transcription_process(task_id, temp_file_path)
     tasks[task_id]["process"] = process
 
     def check_queue():
