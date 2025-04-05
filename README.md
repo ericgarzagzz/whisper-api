@@ -21,7 +21,7 @@ pip install -r requirements.txt
 Start the FastAPI server:
 
 ```bash
-fastapi dev main.py
+fastapi dev app/main.py
 ```
 
 ---
