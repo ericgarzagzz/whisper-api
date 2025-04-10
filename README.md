@@ -122,6 +122,5 @@ curl -X POST "http://localhost:8000/transcribe" \
 - Validate input file to make sure it's not malware, and it's a valid file for whisper to process.
 - Add support for other Whisper tasks (e.g., `transcribe` without translation).
 - Add optional language selection.
-- Persist tasks in a database (Redis might be a good choice).
 - Serve results as subtitle files (e.g., `.srt`, `.vtt`).
 - Let the user choose between whisper models.
