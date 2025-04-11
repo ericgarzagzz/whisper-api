@@ -6,7 +6,7 @@ from typing import Sequence
 
 def search_transcription_tasks() -> Sequence[TranscriptionTask]:
     with Session(engine) as session:
-        statement = select(TranscriptionTask)
+        statement = select(TranscriptionTask).order_by(TranscriptionTask.created_at.desc())
         tasks = session.exec(statement)
         return tasks.all()
 

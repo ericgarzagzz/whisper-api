@@ -55,7 +55,9 @@ async def get_all_transcription_tasks():
     for task in tasks_seq:
         tasks.append(TaskListItem(
             task_id=str(task.id),
-            status=task.status
+            status=task.status,
+            created_at=task.created_at,
+            updated_at=task.updated_at
         ))
 
     return tasks
