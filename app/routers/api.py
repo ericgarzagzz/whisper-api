@@ -2,11 +2,11 @@ from fastapi import APIRouter, HTTPException, UploadFile
 import tempfile
 from ..services.validations_service import check_cuda_warning
 from ..services.transcription_service import start_transcription_process, cancel_transcription
-from ..models.tasks import TaskStatus, TranscribeSegment
+from ..models.tasks import TaskStatus, TaskListItem, TranscribeSegment
 import uuid
 import threading
 import shutil
-from ..services.transcription_task import create_transcription_task_result, get_transcription_task, get_transcription_task_last_result_segments, create_transcription_task, update_transcription_task_status
+from ..services.transcription_task import create_transcription_task_result, search_transcription_tasks, get_transcription_task, get_transcription_task_last_result_segments, create_transcription_task, update_transcription_task_status
 
 router = APIRouter()
 
@@ -47,6 +47,18 @@ async def start_transcription(file: UploadFile):
     threading.Thread(target=check_queue, daemon=True).start()
 
     return TaskStatus(task_id=task_id_str, status="running")
+
+@router.get("/tasks", response_model=list[TaskListItem])
+async def get_all_transcription_tasks():
+    tasks_seq = search_transcription_tasks()
+    tasks = []
+    for task in tasks_seq:
+        tasks.append(TaskListItem(
+            task_id=str(task.id),
+            status=task.status
+        ))
+
+    return tasks
 
 @router.get("/status/{task_id}", response_model=TaskStatus)
 async def get_status(task_id: str):

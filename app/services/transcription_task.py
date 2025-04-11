@@ -2,6 +2,13 @@ from sqlmodel import Session, select
 from ..models.transcribe_segments import TranscribeSegment
 from ..services.db_service import TranscriptionTask, TranscriptionTaskResult, TranscriptionTaskResultSegment, engine
 import uuid
+from typing import Sequence
+
+def search_transcription_tasks() -> Sequence[TranscriptionTask]:
+    with Session(engine) as session:
+        statement = select(TranscriptionTask)
+        tasks = session.exec(statement)
+        return tasks.all()
 
 def get_transcription_task(task_id: uuid.UUID) -> TranscriptionTask | None:
     session = Session(engine)
