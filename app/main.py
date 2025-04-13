@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import api
+from .routers import api, storage
 from .services.db_service import engine
 from sqlmodel import SQLModel
+from .config import Settings
 
 app = FastAPI()
 
@@ -21,3 +22,4 @@ app.add_middleware(
 SQLModel.metadata.create_all(engine)
 
 app.include_router(api.router)
+app.include_router(storage.router)

@@ -38,9 +38,9 @@ def get_transcription_task_full(task_id: uuid.UUID) -> TranscriptionTask | None:
         task_tuple = tasks.first()
         return task_tuple
 
-def create_transcription_task(task_id: uuid.UUID, name: str, status: str):
+def create_transcription_task(task_id: uuid.UUID, name: str, file_path: str, status: str):
     with Session(engine) as session:
-        task = TranscriptionTask(id=task_id, name=name, status=status)
+        task = TranscriptionTask(id=task_id, name=name, file_path=file_path, status=status)
         session.add(task)
         session.commit()
         

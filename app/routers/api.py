@@ -1,19 +1,29 @@
-from fastapi import APIRouter, HTTPException, UploadFile
+from datetime import datetime
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 import tempfile
+from app.config import Settings
+from app.services.storage_service import upload_file
 from ..services.validations_service import check_cuda_warning
 from ..services.transcription_service import start_transcription_process, cancel_transcription
 from ..models.tasks import TaskStatus, TaskListItem, TranscribeSegment
 import uuid
 import threading
 import shutil
+from functools import lru_cache
 from ..services.transcription_task import create_transcription_task_result, search_transcription_tasks, get_transcription_task, get_transcription_task_last_result_segments, create_transcription_task, update_transcription_task_status
 
 router = APIRouter()
 
+
 tasks = {}
 
+@lru_cache()
+def get_settings():
+    return Settings()
+
 @router.post("/transcribe", response_model=TaskStatus)
-async def start_transcription(file: UploadFile):
+async def start_transcription(file: UploadFile, settings: Annotated[Settings, Depends(get_settings)]):
     if file.filename is None:
         return HTTPException(status_code=400, detail="The uploaded file has not been provided or is not a valid file")
 
@@ -24,7 +34,11 @@ async def start_transcription(file: UploadFile):
     task_id = uuid.uuid4()
     task_id_str = str(task_id)
     tasks[task_id_str] = { "status": "running", "result": None, "process": None }
-    create_transcription_task(task_id, name=file.filename, status="running")
+
+    object_name = f"{datetime.now().timestamp()}_{file.filename}"
+    upload_file(temp_file_path, settings.minio_bucket_name, object_name)
+
+    create_transcription_task(task_id, name=file.filename, file_path=object_name, status="running")
 
     check_cuda_warning()
     process, queue = start_transcription_process(task_id_str, temp_file_path)
