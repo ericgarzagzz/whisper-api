@@ -9,6 +9,7 @@ class TaskStatus(BaseModel):
 
 class TaskListItem(BaseModel):
     task_id: str
+    name: str
     status: str
     created_at: datetime | None
     updated_at: datetime | None

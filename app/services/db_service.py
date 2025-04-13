@@ -6,6 +6,7 @@ from sqlmodel import Field, Relationship, SQLModel, create_engine
 class TranscriptionTask(SQLModel, table=True):
     __tablename__ = "transcription_task"
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str
     status: str
     created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc), sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)})

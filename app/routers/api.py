@@ -14,12 +14,6 @@ tasks = {}
 
 @router.post("/transcribe", response_model=TaskStatus)
 async def start_transcription(file: UploadFile):
-    check_cuda_warning()
-    task_id = uuid.uuid4()
-    task_id_str = str(task_id)
-    tasks[task_id_str] = { "status": "running", "result": None, "process": None }
-    create_transcription_task(task_id, status="running", result=None)
-
     if file.filename is None:
         return HTTPException(status_code=400, detail="The uploaded file has not been provided or is not a valid file")
 
@@ -27,6 +21,12 @@ async def start_transcription(file: UploadFile):
         shutil.copyfileobj(file.file, temp_file)
         temp_file_path = temp_file.name
 
+    task_id = uuid.uuid4()
+    task_id_str = str(task_id)
+    tasks[task_id_str] = { "status": "running", "result": None, "process": None }
+    create_transcription_task(task_id, name=file.filename, status="running")
+
+    check_cuda_warning()
     process, queue = start_transcription_process(task_id_str, temp_file_path)
     tasks[task_id_str]["process"] = process
 
@@ -55,6 +55,7 @@ async def get_all_transcription_tasks():
     for task in tasks_seq:
         tasks.append(TaskListItem(
             task_id=str(task.id),
+            name=task.name,
             status=task.status,
             created_at=task.created_at,
             updated_at=task.updated_at
